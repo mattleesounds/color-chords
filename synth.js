@@ -86,7 +86,6 @@ const thirdNote = (r, g, b, root) => {
     note = key.M7
   }
 
-  console.log(octave(r, g, b))
   if (note != key.m7 && note != key.M7) {
     oct = parseInt(octave(r, g, b)) + 1
   } else {
@@ -96,4 +95,45 @@ const thirdNote = (r, g, b, root) => {
   return note + oct.toString()
 }
 
-export { rootNote, secondNote, thirdNote }
+const effect = (r, g, b) => {
+  let red = parseInt(r)
+  let green = parseInt(g)
+  let blue = parseInt(b)
+
+  console.log(red, green, blue)
+
+  //purple
+  if (red - green > 30 && blue - green > 30 && (red - blue < 60 || blue - red < 60)) {
+    return 1
+  }
+  // red
+  else if (red - green > 60 && red - blue > 60) {
+    return 4
+  }
+  // green
+  else if (green - red > 60 && green - blue > 60) {
+    return 2
+  }
+  //blue
+  else if (blue - red > 60 && blue - green > 60) {
+    return 1
+  }
+  // dark
+  else if (red + green + blue < 450) {
+    return 0
+  }
+  // light
+  else {
+    return 3
+  }
+
+  /* 
+  0: phaser
+  1: verb
+  2: chorus
+  3: delay
+  4: distortion
+  */
+}
+
+export { rootNote, secondNote, thirdNote, effect }
