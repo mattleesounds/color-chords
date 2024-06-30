@@ -183,4 +183,30 @@ const rootToKey = (root) => {
   }
 }
 
-export { A, Asharp, B, C, Csharp, D, Dsharp, E, F, Fsharp, G, Gsharp, rootToKey }
+const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const OCTAVES = [2, 3, 4, 5, 6, 7];
+const CHORD_QUALITIES = {
+  '0': '',       // Major
+  '1': 'm',      // Minor
+  '2': '7',      // Dominant 7th
+  '3': 'maj7',   // Major 7th
+  '4': 'm7',     // Minor 7th
+  '5': 'sus4',   // Suspended 4th
+  '6': '6',      // Major 6th
+  '7': 'm6',     // Minor 6th
+  '8': '9',      // Dominant 9th
+  '9': 'maj9',   // Major 9th
+  'A': 'm9',     // Minor 9th
+  'B': '11',     // Dominant 11th
+  'C': '13',     // Dominant 13th
+  'D': 'add9',   // Add9
+  'E': 'm11',    // Minor 11th
+  'F': '5'       // Power Chord (no third)
+};
+
+const INVERSIONS = 4; // 0 = root position, 1 = first inversion, 2 = second inversion, 3 = third inversion
+const VOICINGS = 5; // Different ways to spread the notes across octaves
+const EFFECTS = ['none', 'reverb', 'delay', 'chorus', 'phaser', 'tremolo', 'distortion', 'compression'];
+const EFFECT_INTENSITIES = 16; // 0-15 intensity levels for each effect
+
+export { NOTES, OCTAVES, CHORD_QUALITIES, INVERSIONS, VOICINGS, EFFECTS, EFFECT_INTENSITIES };
