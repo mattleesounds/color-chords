@@ -14,13 +14,18 @@ let randomColor = getRandomHexColor();
 document.querySelector('#app').style.backgroundColor = randomColor;
 
 document.getElementById("play-button").addEventListener("click", async function () {
+  console.log('Button clicked');
   try {
     await Tone.start(); // Ensure Tone.js is started
+    console.log('Tone started');
     let randomColor = getRandomHexColor();
+    console.log('Random color generated:', randomColor);
     document.querySelector('#app').style.backgroundColor = randomColor;
 
     const complexChord = hexToComplexChord(randomColor);
+    console.log('Complex chord generated:', complexChord);
     const chordNotes = generateComplexChord(complexChord);
+    console.log('Chord notes generated:', chordNotes);
 
     const synth = new Tone.PolySynth().toDestination();
     synth.set({
@@ -32,8 +37,10 @@ document.getElementById("play-button").addEventListener("click", async function 
 
     Tone.Master.volume.value = -10;
 
-    synth.triggerAttackRelease(chordNotes, '1.5n', Tone.now());
-    console.log(complexChord, chordNotes);
+    // Use a valid duration for the chord
+    const duration = '1.5n';
+    synth.triggerAttackRelease(chordNotes, duration, Tone.now());
+    console.log('Chord played');
 
     document.querySelector('#text').innerHTML = `
       <div>

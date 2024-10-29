@@ -184,7 +184,7 @@ const rootToKey = (root) => {
 }
 
 const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const OCTAVES = [2, 3, 4, 5, 6, 7];
+const OCTAVES = [0, 1, 2, 3, 4, 5];
 const CHORD_QUALITIES = {
   '0': '',       // Major
   '1': 'm',      // Minor
@@ -209,4 +209,4 @@ const VOICINGS = 5; // Different ways to spread the notes across octaves
 const EFFECTS = ['none', 'reverb', 'delay', 'chorus', 'phaser', 'tremolo', 'distortion', 'compression'];
 const EFFECT_INTENSITIES = 16; // 0-15 intensity levels for each effect
 
-export { NOTES, OCTAVES, CHORD_QUALITIES, INVERSIONS, VOICINGS, EFFECTS, EFFECT_INTENSITIES };
+export { NOTES, OCTAVES, CHORD_QUALITIES, INVERSIONS, VOICINGS, EFFECTS, EFFECT_INTENSITIES, rootToKey };
