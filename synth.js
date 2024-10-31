@@ -1,6 +1,6 @@
-import { NOTES, OCTAVES, CHORD_QUALITIES, EFFECTS, INVERSIONS, VOICINGS, rootToKey } from './data.js';
+import { NOTES, OCTAVES, CHORD_QUALITIES, INVERSIONS, VOICINGS, rootToKey } from './data.js';
 
-// Helper functions for color analysis
+// Enhanced color analysis functions
 function rgbToHsl(r, g, b) {
   r /= 255;
   g /= 255;
@@ -30,18 +30,21 @@ function rgbToHsl(r, g, b) {
 function getColorCharacteristics(r, g, b) {
   const { hue, saturation, lightness } = rgbToHsl(r, g, b);
   
-  // Calculate color temperature (warm vs cool)
+  // Enhanced color temperature calculation
   const isWarm = (hue >= 0 && hue <= 60) || (hue >= 300 && hue <= 360);
   
-  // Calculate color intensity
-  const intensity = Math.sqrt(r*r + g*g + b*b) / Math.sqrt(3 * 255 * 255);
+  // Enhanced intensity calculation incorporating both brightness and saturation
+  const intensity = (saturation * lightness) / 10000;
   
-  // Calculate grayness
+  // Enhanced grayness calculation
   const maxDiff = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
   const isGray = maxDiff < 30;
   
-  // Calculate vibrancy
-  const vibrancy = saturation * (1 - Math.abs(lightness - 50) / 50);
+  // Enhanced vibrancy calculation
+  const vibrancy = saturation * Math.sin(Math.PI * lightness / 100);
+
+  // Calculate color complexity (how "pure" vs "mixed" the color is)
+  const complexity = Math.abs((r - g) * (g - b) * (b - r)) / Math.pow(255, 3);
 
   return {
     hue,
@@ -50,52 +53,64 @@ function getColorCharacteristics(r, g, b) {
     isWarm,
     intensity,
     isGray,
-    vibrancy
+    vibrancy,
+    complexity
   };
 }
 
 function determineChordQuality(colorCharacteristics) {
-  const { hue, saturation, lightness, isWarm, intensity, isGray, vibrancy } = colorCharacteristics;
+  const { hue, saturation, lightness, isWarm, intensity, isGray, vibrancy, complexity } = colorCharacteristics;
   
-  // Handle grayscale colors specially
+  // Handle grayscale colors with more nuance
   if (isGray) {
-    if (lightness < 20) return 'dim7';      // Very dark gray - diminished 7th
-    if (lightness > 80) return 'sus4';      // Very light gray - suspended 4th
-    return 'sus2';                          // Mid gray - suspended 2nd
+    if (lightness < 20) return 'dim7';      // Dark gray - mysterious, tense
+    if (lightness > 80) return 'maj7';      // Light gray - peaceful, floating
+    if (lightness > 50) return 'sus4';      // Medium-light gray - unresolved but bright
+    return 'sus2';                          // Medium-dark gray - unresolved but grounded
   }
 
-  // For vibrant, saturated colors
-  if (vibrancy > 70) {
+  // For highly saturated colors
+  if (saturation > 80) {
     if (isWarm) {
-      if (lightness > 60) return 'maj9';    // Bright warm colors - major 9th
-      return '13';                          // Dark warm colors - dominant 13th
+      if (lightness > 60) return 'maj9';    // Bright warm - expansive, joyful
+      return '13';                          // Deep warm - rich, complex
     } else {
-      if (lightness > 60) return 'maj7';    // Bright cool colors - major 7th
-      return 'm9';                          // Dark cool colors - minor 9th
+      if (lightness > 60) return 'maj7#11'; // Bright cool - dreamy, ethereal
+      return 'm9';                          // Deep cool - sophisticated, moody
     }
   }
 
-  // For muted colors
-  if (saturation < 40) {
+  // For complex mixed colors
+  if (complexity > 0.5) {
     if (isWarm) {
-      return 'm7';                          // Muted warm - minor 7th
+      return '9';                           // Warm complex - rich, layered
     } else {
-      return 'm6';                          // Muted cool - minor 6th
+      return 'm11';                         // Cool complex - intricate, atmospheric
     }
   }
 
   // For medium saturation
+  if (saturation >= 40 && saturation <= 80) {
+    if (isWarm) {
+      if (lightness > 60) return 'maj7';    // Medium warm bright - gentle happiness
+      return '7';                           // Medium warm dark - balanced tension
+    } else {
+      if (lightness > 60) return 'm6';      // Medium cool bright - wistful
+      return 'm7';                          // Medium cool dark - melancholic
+    }
+  }
+
+  // For muted colors
   if (isWarm) {
-    return '';                              // Warm medium - major triad
+    return '';                              // Muted warm - simple, clear
   } else {
-    return 'm';                             // Cool medium - minor triad
+    return 'm';                             // Muted cool - simple, introspective
   }
 }
 
 function hexToComplexChord(hexColor) {
   const hex = hexColor.replace('#', '').toUpperCase();
-  console.log(`Hex color: ${hex}`);
-
+  
   if (hex.length !== 6) {
     console.error(`Invalid hex color code: ${hexColor}`);
     return {};
@@ -107,33 +122,30 @@ function hexToComplexChord(hexColor) {
   const b = parseInt(hex.substr(4, 2), 16);
 
   const colorCharacteristics = getColorCharacteristics(r, g, b);
-  const { hue, saturation, lightness } = colorCharacteristics;
+  const { hue, saturation, lightness, complexity } = colorCharacteristics;
 
-  // Map hue to root note
-  const rootIndex = Math.round(hue / 30) % 12;
+  // Enhanced root note mapping using micro-tuning based on exact hue
+  const hueAdjusted = (hue + (complexity * 15)) % 360; // Slight adjustment based on complexity
+  const rootIndex = Math.round(hueAdjusted / 30) % 12;
   const rootNote = NOTES[rootIndex];
 
-  // Map lightness to octave (1-5 range)
-  const octave = Math.floor(lightness / 100 * 4) + 1;
+  // Enhanced octave mapping using both lightness and saturation
+  const octaveFloat = (lightness / 100 * 3) + (saturation / 100);
+  const octave = Math.max(1, Math.min(5, Math.floor(octaveFloat) + 1));
 
-  // Determine chord quality based on color characteristics
+  // Determine chord quality
   const quality = determineChordQuality(colorCharacteristics);
 
-  // Use RGB values for additional parameters to ensure uniqueness
-  const colorSum = r + g + b;
-  const inversion = colorSum % INVERSIONS;
-  const voicing = Math.min((colorSum * 2) % VOICINGS, 2);
-
-  // Map color intensity to effect
-  const effectIndex = Math.floor(colorCharacteristics.intensity * (EFFECTS.length - 1));
+  // Use RGB values to determine unique inversions and voicings
+  const uniqueValue = (r * 256 * 256 + g * 256 + b);
+  const inversion = uniqueValue % INVERSIONS;
+  const voicing = Math.min((uniqueValue * 2) % VOICINGS, 2);
 
   return {
     root: `${rootNote}${octave}`,
     quality: quality,
     inversion: inversion,
-    voicing: voicing,
-    effect: EFFECTS[effectIndex],
-    effectIntensity: saturation / 100
+    voicing: voicing
   };
 }
 
@@ -157,26 +169,31 @@ function generateComplexChord(chord) {
     case 'm6':
     case 'm9':
     case 'm11':
-      chordNotes.push(NOTES.indexOf(rootKey.m3)); // Minor third
+      chordNotes.push(NOTES.indexOf(rootKey.m3));
       break;
     case 'sus4':
-      chordNotes.push(NOTES.indexOf(rootKey.P4)); // Perfect fourth
+      chordNotes.push(NOTES.indexOf(rootKey.P4));
       break;
     case 'sus2':
-      chordNotes.push(NOTES.indexOf(rootKey.M2)); // Major second
+      chordNotes.push(NOTES.indexOf(rootKey.M2));
       break;
+    case 'dim7':
+      chordNotes.push(NOTES.indexOf(rootKey.m3));
+      chordNotes.push(NOTES.indexOf(rootKey.dim5));
+      chordNotes.push(NOTES.indexOf(rootKey.dim7));
+      return; // Early return for diminished 7th
     case '5':
-      break; // No third for power chord
+      break;
     default:
-      chordNotes.push(NOTES.indexOf(rootKey.M3)); // Major third
+      chordNotes.push(NOTES.indexOf(rootKey.M3));
   }
 
-  // Add fifth unless it's a special chord type
-  if (chord.quality !== '5') {
+  // Add fifth
+  if (!chord.quality.includes('dim')) {
     chordNotes.push(NOTES.indexOf(rootKey.P5));
   }
 
-  // Add extensions (sixths, sevenths, ninths, etc.)
+  // Add extensions with improved voicing logic
   if (chord.quality.includes('maj7')) {
     chordNotes.push(NOTES.indexOf(rootKey.M7));
   } else if (chord.quality.includes('7')) {
@@ -185,7 +202,7 @@ function generateComplexChord(chord) {
     chordNotes.push(NOTES.indexOf(rootKey.M6));
   }
 
-  if (chord.quality.includes('9') || chord.quality.includes('add9')) {
+  if (chord.quality.includes('9')) {
     chordNotes.push(NOTES.indexOf(rootKey.M9));
   }
 
@@ -193,32 +210,36 @@ function generateComplexChord(chord) {
     chordNotes.push(NOTES.indexOf(rootKey.P11));
   }
 
-  // Apply inversion
+  if (chord.quality.includes('13')) {
+    chordNotes.push(NOTES.indexOf(rootKey.M13));
+  }
+
+  if (chord.quality.includes('#11')) {
+    chordNotes.push(NOTES.indexOf(rootKey.aug11));
+  }
+
+  // Apply inversion with improved spacing
   for (let i = 0; i < chord.inversion; i++) {
     chordNotes.push(chordNotes.shift() + 12);
   }
 
-  // Apply voicing with controlled octave spread
+  // Apply enhanced voicing with better octave distribution
   chordNotes = chordNotes.map((note, index) => {
-    // Calculate new note with voicing
     const newNote = note + (chord.voicing * index);
-    // Calculate resulting octave
     const resultingOctave = Math.floor(newNote / 12) + baseOctave;
     
-    // If resulting octave is too high or too low, adjust it
     if (resultingOctave > 5) {
-      return note + (baseOctave * 12) - 12; // Move down an octave
+      return note + (baseOctave * 12) - 12;
     } else if (resultingOctave < 1) {
-      return note + (baseOctave * 12) + 12; // Move up an octave
+      return note + (baseOctave * 12) + 12;
     }
     return note + (baseOctave * 12);
   });
 
-  // Convert to note names with octaves, ensuring octaves 1-5
+  // Convert to note names with octaves
   return chordNotes.map(pitch => {
     const noteIndex = ((pitch % 12) + 12) % 12;
     let octave = Math.floor(pitch / 12) + 1;
-    // Clamp octave between 1 and 5
     octave = Math.max(1, Math.min(5, octave));
     return `${NOTES[noteIndex]}${octave}`;
   });

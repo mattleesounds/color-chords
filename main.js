@@ -53,8 +53,6 @@ document.getElementById("play-button").addEventListener("click", async function 
           <br>
           Notes: ${chordNotes.join(', ')}
           <br>
-          <br>
-          Effect: ${complexChord.effect} (Intensity: ${complexChord.effectIntensity})
         </h1>
       </div>
     `;
