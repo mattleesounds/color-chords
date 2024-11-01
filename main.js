@@ -1,6 +1,7 @@
 import * as Tone from 'tone';
 import './style.css';
 import { hexToComplexChord, generateComplexChord } from './synth.js';
+import { CHORD_NAMES } from './data.js';
 
 function getRandomInt() {
   return Math.floor(Math.random() * 255);
@@ -8,6 +9,13 @@ function getRandomInt() {
 
 function getRandomHexColor() {
   return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+}
+
+function getFullChordName(chord) {
+  const rootNote = chord.root.slice(0, -1);  // Keep original root note (C#, etc.)
+  const octaveNum = chord.root.slice(-1);
+  const qualityName = CHORD_NAMES[chord.quality] || chord.quality;
+  return `${rootNote} ${qualityName}`;
 }
 
 let randomColor = getRandomHexColor();
@@ -48,7 +56,7 @@ document.getElementById("play-button").addEventListener("click", async function 
           Color: ${randomColor}
           <br>
           <br>
-          Chord: ${complexChord.root}${complexChord.quality}
+          Chord: ${getFullChordName(complexChord)}
           <br>
           <br>
           Notes: ${chordNotes.join(', ')}

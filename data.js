@@ -209,4 +209,36 @@ const VOICINGS = 5; // Different ways to spread the notes across octaves
 const EFFECTS = ['none', 'reverb', 'delay', 'chorus', 'phaser', 'tremolo', 'distortion', 'compression'];
 const EFFECT_INTENSITIES = 16; // 0-15 intensity levels for each effect
 
-export { NOTES, OCTAVES, CHORD_QUALITIES, INVERSIONS, VOICINGS, EFFECTS, EFFECT_INTENSITIES, rootToKey };
+const CHORD_NAMES = {
+  '': 'Major',
+  'm': 'Minor',
+  '7': 'Dominant 7',
+  'maj7': 'Major 7',
+  'm7': 'Minor 7',
+  'sus4': 'Sus 4',
+  '6': 'Major 6',
+  'm6': 'Minor 6',
+  '9': 'Dominant 9',
+  'maj9': 'Major 9',
+  'm9': 'Minor 9',
+  '11': 'Dominant 11',
+  'm11': 'Minor 11',
+  '13': 'Dominant 13',
+  'add9': 'Add 9',
+  'dim7': 'Diminished 7',
+  'sus2': 'Sus 2',
+  '5': 'Power',
+  'maj7#11': 'Major 7 Sharp 11'
+};
+
+export { 
+  NOTES, 
+  OCTAVES, 
+  CHORD_QUALITIES, 
+  INVERSIONS, 
+  VOICINGS, 
+  EFFECTS, 
+  EFFECT_INTENSITIES, 
+  rootToKey,
+  CHORD_NAMES
+};
