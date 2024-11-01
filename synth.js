@@ -1,6 +1,5 @@
 import { NOTES, OCTAVES, CHORD_QUALITIES, INVERSIONS, VOICINGS, rootToKey } from './data.js';
 
-// Enhanced color analysis functions
 function rgbToHsl(r, g, b) {
   r /= 255;
   g /= 255;
@@ -30,20 +29,11 @@ function rgbToHsl(r, g, b) {
 function getColorCharacteristics(r, g, b) {
   const { hue, saturation, lightness } = rgbToHsl(r, g, b);
   
-  // Enhanced color temperature calculation
   const isWarm = (hue >= 0 && hue <= 60) || (hue >= 300 && hue <= 360);
-  
-  // Enhanced intensity calculation incorporating both brightness and saturation
   const intensity = (saturation * lightness) / 10000;
-  
-  // Enhanced grayness calculation
   const maxDiff = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
   const isGray = maxDiff < 30;
-  
-  // Enhanced vibrancy calculation
   const vibrancy = saturation * Math.sin(Math.PI * lightness / 100);
-
-  // Calculate color complexity (how "pure" vs "mixed" the color is)
   const complexity = Math.abs((r - g) * (g - b) * (b - r)) / Math.pow(255, 3);
 
   return {
@@ -61,51 +51,65 @@ function getColorCharacteristics(r, g, b) {
 function determineChordQuality(colorCharacteristics) {
   const { hue, saturation, lightness, isWarm, intensity, isGray, vibrancy, complexity } = colorCharacteristics;
   
-  // Handle grayscale colors with more nuance
   if (isGray) {
-    if (lightness < 20) return 'dim7';      // Dark gray - mysterious, tense
-    if (lightness > 80) return 'maj7';      // Light gray - peaceful, floating
-    if (lightness > 50) return 'sus4';      // Medium-light gray - unresolved but bright
-    return 'sus2';                          // Medium-dark gray - unresolved but grounded
+    if (lightness < 20) return 'dim7';
+    if (lightness > 80) return 'maj7';
+    if (lightness > 50) return 'sus4';
+    return 'sus2';
   }
 
-  // For highly saturated colors
   if (saturation > 80) {
     if (isWarm) {
-      if (lightness > 60) return 'maj9';    // Bright warm - expansive, joyful
-      return '13';                          // Deep warm - rich, complex
+      if (lightness > 60) return 'maj9';
+      return '13';
     } else {
-      if (lightness > 60) return 'maj7#11'; // Bright cool - dreamy, ethereal
-      return 'm9';                          // Deep cool - sophisticated, moody
+      if (lightness > 60) return 'maj7#11';
+      return 'm9';
     }
   }
 
-  // For complex mixed colors
   if (complexity > 0.5) {
-    if (isWarm) {
-      return '9';                           // Warm complex - rich, layered
-    } else {
-      return 'm11';                         // Cool complex - intricate, atmospheric
-    }
+    if (isWarm) return '9';
+    return 'm11';
   }
 
-  // For medium saturation
   if (saturation >= 40 && saturation <= 80) {
     if (isWarm) {
-      if (lightness > 60) return 'maj7';    // Medium warm bright - gentle happiness
-      return '7';                           // Medium warm dark - balanced tension
+      if (lightness > 60) return 'maj7';
+      return '7';
     } else {
-      if (lightness > 60) return 'm6';      // Medium cool bright - wistful
-      return 'm7';                          // Medium cool dark - melancholic
+      if (lightness > 60) return 'm6';
+      return 'm7';
     }
   }
 
-  // For muted colors
-  if (isWarm) {
-    return '';                              // Muted warm - simple, clear
-  } else {
-    return 'm';                             // Muted cool - simple, introspective
-  }
+  return isWarm ? '' : 'm';
+}
+
+function calculateUniqueCents(r, g, b) {
+  // Create a unique number between 0 and 16,777,215 (256^3 - 1)
+  const uniqueColorValue = (r * 256 * 256) + (g * 256) + b;
+  
+  // Map this unique value to the range -50 to +50 cents
+  // Subtract 8388607.5 (half of 16,777,215) to center around 0
+  const cents = Math.round((uniqueColorValue - 8388607.5) / 8388607.5 * 50);
+  
+  return cents;
+}
+
+function getNoteFrequency(note, octave, cents) {
+  const noteIndex = NOTES.indexOf(note);
+  if (noteIndex === -1) return null;
+  
+  const a4 = 440;
+  const a4Index = NOTES.indexOf('A');
+  const a4Octave = 4;
+  
+  const semitonesFromA4 = (octave - a4Octave) * 12 + (noteIndex - a4Index);
+  const baseFreq = a4 * Math.pow(2, semitonesFromA4 / 12);
+  
+  // Apply the quarter-tone adjustment
+  return baseFreq * Math.pow(2, cents / 1200);
 }
 
 function hexToComplexChord(hexColor) {
@@ -116,7 +120,6 @@ function hexToComplexChord(hexColor) {
     return {};
   }
 
-  // Convert hex to RGB
   const r = parseInt(hex.substr(0, 2), 16);
   const g = parseInt(hex.substr(2, 2), 16);
   const b = parseInt(hex.substr(4, 2), 16);
@@ -124,28 +127,27 @@ function hexToComplexChord(hexColor) {
   const colorCharacteristics = getColorCharacteristics(r, g, b);
   const { hue, saturation, lightness, complexity } = colorCharacteristics;
 
-  // Enhanced root note mapping using micro-tuning based on exact hue
-  const hueAdjusted = (hue + (complexity * 15)) % 360; // Slight adjustment based on complexity
+  const hueAdjusted = (hue + (complexity * 15)) % 360;
   const rootIndex = Math.round(hueAdjusted / 30) % 12;
   const rootNote = NOTES[rootIndex];
 
-  // Enhanced octave mapping using both lightness and saturation
   const octaveFloat = (lightness / 100 * 3) + (saturation / 100);
   const octave = Math.max(1, Math.min(5, Math.floor(octaveFloat) + 1));
 
-  // Determine chord quality
   const quality = determineChordQuality(colorCharacteristics);
 
-  // Use RGB values to determine unique inversions and voicings
   const uniqueValue = (r * 256 * 256 + g * 256 + b);
   const inversion = uniqueValue % INVERSIONS;
   const voicing = Math.min((uniqueValue * 2) % VOICINGS, 2);
+
+  const centsDeviation = calculateUniqueCents(r, g, b);
 
   return {
     root: `${rootNote}${octave}`,
     quality: quality,
     inversion: inversion,
-    voicing: voicing
+    voicing: voicing,
+    centsDeviation: centsDeviation.toString()
   };
 }
 
@@ -153,6 +155,7 @@ function generateComplexChord(chord) {
   const rootNote = chord.root[0];
   const baseOctave = parseInt(chord.root.slice(-1));
   const rootKey = rootToKey(rootNote);
+  const centsDeviation = parseInt(chord.centsDeviation);
   
   if (!rootKey) {
     console.error(`Invalid root: ${rootNote}`);
@@ -162,7 +165,6 @@ function generateComplexChord(chord) {
   const rootPitch = NOTES.indexOf(rootNote);
   let chordNotes = [rootPitch];
 
-  // Add chord tones based on quality
   switch (chord.quality) {
     case 'm':
     case 'm7':
@@ -181,19 +183,17 @@ function generateComplexChord(chord) {
       chordNotes.push(NOTES.indexOf(rootKey.m3));
       chordNotes.push(NOTES.indexOf(rootKey.dim5));
       chordNotes.push(NOTES.indexOf(rootKey.dim7));
-      return; // Early return for diminished 7th
+      break;
     case '5':
       break;
     default:
       chordNotes.push(NOTES.indexOf(rootKey.M3));
   }
 
-  // Add fifth
   if (!chord.quality.includes('dim')) {
     chordNotes.push(NOTES.indexOf(rootKey.P5));
   }
 
-  // Add extensions with improved voicing logic
   if (chord.quality.includes('maj7')) {
     chordNotes.push(NOTES.indexOf(rootKey.M7));
   } else if (chord.quality.includes('7')) {
@@ -218,12 +218,10 @@ function generateComplexChord(chord) {
     chordNotes.push(NOTES.indexOf(rootKey.aug11));
   }
 
-  // Apply inversion with improved spacing
   for (let i = 0; i < chord.inversion; i++) {
     chordNotes.push(chordNotes.shift() + 12);
   }
 
-  // Apply enhanced voicing with better octave distribution
   chordNotes = chordNotes.map((note, index) => {
     const newNote = note + (chord.voicing * index);
     const resultingOctave = Math.floor(newNote / 12) + baseOctave;
@@ -236,12 +234,17 @@ function generateComplexChord(chord) {
     return note + (baseOctave * 12);
   });
 
-  // Convert to note names with octaves
   return chordNotes.map(pitch => {
     const noteIndex = ((pitch % 12) + 12) % 12;
     let octave = Math.floor(pitch / 12) + 1;
     octave = Math.max(1, Math.min(5, octave));
-    return `${NOTES[noteIndex]}${octave}`;
+    const noteName = `${NOTES[noteIndex]}${octave}`;
+    
+    return {
+      note: noteName,
+      frequency: getNoteFrequency(NOTES[noteIndex], octave, centsDeviation),
+      cents: centsDeviation
+    };
   });
 }
 
