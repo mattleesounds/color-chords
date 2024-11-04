@@ -29,7 +29,13 @@ function rgbToHsl(r, g, b) {
 function getColorCharacteristics(r, g, b) {
   const { hue, saturation, lightness } = rgbToHsl(r, g, b);
   
-  const isWarm = (hue >= 0 && hue <= 60) || (hue >= 300 && hue <= 360);
+  // New hue mapping - shift by 300 degrees to make yellow (60°) map to C (0)
+  const shiftedHue = (hue + 300) % 360;
+  
+  // Adjust warm/cool boundary for new mapping
+  // Now warm colors are centered around yellow (previously red)
+  const isWarm = (hue >= 30 && hue <= 90) || (hue >= 330 && hue <= 360);
+  
   const intensity = (saturation * lightness) / 10000;
   const maxDiff = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b));
   const isGray = maxDiff < 30;
@@ -37,7 +43,7 @@ function getColorCharacteristics(r, g, b) {
   const complexity = Math.abs((r - g) * (g - b) * (b - r)) / Math.pow(255, 3);
 
   return {
-    hue,
+    hue: shiftedHue,
     saturation,
     lightness,
     isWarm,
