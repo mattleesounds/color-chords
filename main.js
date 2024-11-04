@@ -34,9 +34,15 @@ document.getElementById("play-button").addEventListener("click", async function 
     document.querySelector('#app').style.backgroundColor = randomColor;
 
     const complexChord = hexToComplexChord(randomColor);
-    console.log('Complex chord generated:', complexChord);
+    console.log('--- Debug: Chord Specification ---');
+    console.log('Complex chord object:', complexChord);
+    
     const chordNotes = generateComplexChord(complexChord);
-    console.log('Chord notes generated:', chordNotes);
+    console.log('--- Debug: Chord Generation ---');
+    console.log('Root note:', complexChord.root[0]);
+    console.log('Quality:', complexChord.quality);
+    console.log('Generated notes:', chordNotes);
+    console.log('-------------------------');
 
     const synth = new Tone.PolySynth().toDestination();
     synth.set({

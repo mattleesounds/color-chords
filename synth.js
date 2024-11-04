@@ -1,4 +1,4 @@
-import { NOTES, OCTAVES, CHORD_QUALITIES, INVERSIONS, VOICINGS, rootToKey } from './data.js';
+import { NOTES, OCTAVES, VOICINGS, CHORD_INTERVALS } from './data.js';
 
 function rgbToHsl(r, g, b) {
   r /= 255;
@@ -137,7 +137,6 @@ function hexToComplexChord(hexColor) {
   const quality = determineChordQuality(colorCharacteristics);
 
   const uniqueValue = (r * 256 * 256 + g * 256 + b);
-  const inversion = uniqueValue % INVERSIONS;
   const voicing = Math.min((uniqueValue * 2) % VOICINGS, 2);
 
   const centsDeviation = calculateUniqueCents(r, g, b);
@@ -145,107 +144,48 @@ function hexToComplexChord(hexColor) {
   return {
     root: `${rootNote}${octave}`,
     quality: quality,
-    inversion: inversion,
     voicing: voicing,
     centsDeviation: centsDeviation.toString()
   };
 }
 
 function generateComplexChord(chord) {
-  const rootNote = chord.root[0];
+  const rootNote = chord.root.slice(0, -1);  // Get complete root note without octave
   const baseOctave = parseInt(chord.root.slice(-1));
-  const rootKey = rootToKey(rootNote);
   const centsDeviation = parseInt(chord.centsDeviation);
   
-  if (!rootKey) {
+  // Get root note index
+  const rootIndex = NOTES.indexOf(rootNote);
+  if (rootIndex === -1) {
     console.error(`Invalid root: ${rootNote}`);
     return [];
   }
 
-  const rootPitch = NOTES.indexOf(rootNote);
-  let chordNotes = [rootPitch];
+  // Get intervals for the chord quality
+  const intervals = CHORD_INTERVALS[chord.quality] || CHORD_INTERVALS[''];  // default to major if quality not found
 
-  switch (chord.quality) {
-    case 'm':
-    case 'm7':
-    case 'm6':
-    case 'm9':
-    case 'm11':
-      chordNotes.push(NOTES.indexOf(rootKey.m3));
-      break;
-    case 'sus4':
-      chordNotes.push(NOTES.indexOf(rootKey.P4));
-      break;
-    case 'sus2':
-      chordNotes.push(NOTES.indexOf(rootKey.M2));
-      break;
-    case 'dim7':
-      chordNotes.push(NOTES.indexOf(rootKey.m3));
-      chordNotes.push(NOTES.indexOf(rootKey.dim5));
-      chordNotes.push(NOTES.indexOf(rootKey.dim7));
-      break;
-    case '5':
-      break;
-    default:
-      chordNotes.push(NOTES.indexOf(rootKey.M3));
-  }
-
-  if (!chord.quality.includes('dim')) {
-    chordNotes.push(NOTES.indexOf(rootKey.P5));
-  }
-
-  if (chord.quality.includes('maj7')) {
-    chordNotes.push(NOTES.indexOf(rootKey.M7));
-  } else if (chord.quality.includes('7')) {
-    chordNotes.push(NOTES.indexOf(rootKey.m7));
-  } else if (chord.quality.includes('6')) {
-    chordNotes.push(NOTES.indexOf(rootKey.M6));
-  }
-
-  if (chord.quality.includes('9')) {
-    chordNotes.push(NOTES.indexOf(rootKey.M9));
-  }
-
-  if (chord.quality.includes('11')) {
-    chordNotes.push(NOTES.indexOf(rootKey.P11));
-  }
-
-  if (chord.quality.includes('13')) {
-    chordNotes.push(NOTES.indexOf(rootKey.M13));
-  }
-
-  if (chord.quality.includes('#11')) {
-    chordNotes.push(NOTES.indexOf(rootKey.aug11));
-  }
-
-  for (let i = 0; i < chord.inversion; i++) {
-    chordNotes.push(chordNotes.shift() + 12);
-  }
-
-  chordNotes = chordNotes.map((note, index) => {
-    const newNote = note + (chord.voicing * index);
-    const resultingOctave = Math.floor(newNote / 12) + baseOctave;
+  // Generate notes using intervals
+  let notes = intervals.map((interval, index) => {
+    // Calculate the actual note index in the chromatic scale
+    const noteIndex = ((rootIndex + interval) % 12 + 12) % 12;
     
-    if (resultingOctave > 5) {
-      return note + (baseOctave * 12) - 12;
-    } else if (resultingOctave < 1) {
-      return note + (baseOctave * 12) + 12;
-    }
-    return note + (baseOctave * 12);
-  });
-
-  return chordNotes.map(pitch => {
-    const noteIndex = ((pitch % 12) + 12) % 12;
-    let octave = Math.floor(pitch / 12) + 1;
-    octave = Math.max(1, Math.min(5, octave));
-    const noteName = `${NOTES[noteIndex]}${octave}`;
+    // Calculate octave shifts based on interval size
+    const octaveShift = Math.floor((interval) / 12);
+    let finalOctave = baseOctave + octaveShift;
+    
+    // Keep within reasonable range (1-5)
+    finalOctave = Math.max(1, Math.min(5, finalOctave));
+    
+    const noteName = `${NOTES[noteIndex]}${finalOctave}`;
     
     return {
       note: noteName,
-      frequency: getNoteFrequency(NOTES[noteIndex], octave, centsDeviation),
+      frequency: getNoteFrequency(NOTES[noteIndex], finalOctave, centsDeviation),
       cents: centsDeviation
     };
   });
+
+  return notes;
 }
 
 export { hexToComplexChord, generateComplexChord };
