@@ -1,4 +1,4 @@
-import { NOTES, OCTAVES, VOICINGS, CHORD_INTERVALS } from './data.js';
+import { NOTES, OCTAVES, VOICINGS, CHORD_INTERVALS, NOTE_ENHARMONIC, NOTES_WITH_SHARPS, NOTES_WITH_FLATS } from './data.js';
 
 function rgbToHsl(r, g, b) {
   r /= 255;
@@ -97,19 +97,92 @@ function calculateUniqueCents(r, g, b) {
   return cents;
 }
 
+function getProperNoteName(note, key) {
+  // Strip octave number if present
+  const noteWithoutOctave = note.replace(/\d/g, '');
+  const octave = note.match(/\d/) ? note.match(/\d/)[0] : '';
+  
+  // Determine if we should use flats based on the key
+  const useFlats = FLAT_KEYS.includes(key) || 
+                  FLAT_KEYS.includes(key + 'm');
+  
+  const noteArray = useFlats ? NOTES_WITH_FLATS : NOTES_WITH_SHARPS;
+  const chromaticIndex = NOTES_WITH_SHARPS.indexOf(noteWithoutOctave);
+  
+  if (chromaticIndex === -1) {
+    // If note wasn't found in sharps, try to find it in flats
+    const flatIndex = NOTES_WITH_FLATS.indexOf(noteWithoutOctave);
+    if (flatIndex === -1) {
+      return note; // Return original if not found
+    }
+    return noteArray[flatIndex] + octave;
+  }
+  
+  return noteArray[chromaticIndex] + octave;
+}
+
 function getNoteFrequency(note, octave, cents) {
-  const noteIndex = NOTES.indexOf(note);
+  // Convert any flat notes to their sharp equivalents for frequency calculation
+  const noteWithoutOctave = note.replace(/\d/g, '');
+  let searchNote = noteWithoutOctave;
+  
+  // Convert flat notes to their sharp equivalents using the enharmonic mapping
+  if (NOTE_ENHARMONIC[noteWithoutOctave] && NOTE_ENHARMONIC[noteWithoutOctave].includes('#')) {
+    searchNote = NOTE_ENHARMONIC[noteWithoutOctave];
+  }
+  
+  const noteIndex = NOTES_WITH_SHARPS.indexOf(searchNote);
   if (noteIndex === -1) return null;
   
   const a4 = 440;
-  const a4Index = NOTES.indexOf('A');
+  const a4Index = NOTES_WITH_SHARPS.indexOf('A');
   const a4Octave = 4;
   
   const semitonesFromA4 = (octave - a4Octave) * 12 + (noteIndex - a4Index);
   const baseFreq = a4 * Math.pow(2, semitonesFromA4 / 12);
   
-  // Apply the quarter-tone adjustment
   return baseFreq * Math.pow(2, cents / 1200);
+}
+
+function generateComplexChord(chord) {
+  const rootNote = chord.root.slice(0, -1);  // Get complete root note without octave
+  const centsDeviation = parseInt(chord.centsDeviation);
+  
+  // Always use octave 3 as base
+  const baseOctave = 3;
+  
+  // Get root note index
+  const rootIndex = NOTES.indexOf(rootNote);
+  if (rootIndex === -1) {
+    console.error(`Invalid root: ${rootNote}`);
+    return [];
+  }
+
+  // Get intervals for the chord quality
+  const intervals = CHORD_INTERVALS[chord.quality] || CHORD_INTERVALS[''];  // default to major if quality not found
+
+  // Generate notes using intervals
+  let notes = intervals.map((interval, index) => {
+    // Calculate the actual note index in the chromatic scale
+    const noteIndex = ((rootIndex + interval) % 12 + 12) % 12;
+    
+    // Calculate octave shifts based on interval size, but limit to octave 4
+    const octaveShift = Math.floor((interval) / 12);
+    let finalOctave = baseOctave + octaveShift;
+    
+    // Keep within octaves 3-4 range
+    finalOctave = Math.min(4, finalOctave);
+    
+    const noteName = `${NOTES[noteIndex]}${finalOctave}`;
+    
+    return {
+      note: noteName,
+      frequency: getNoteFrequency(NOTES[noteIndex], finalOctave, centsDeviation),
+      cents: centsDeviation
+    };
+  });
+
+  return notes;
 }
 
 function hexToComplexChord(hexColor) {
@@ -131,8 +204,8 @@ function hexToComplexChord(hexColor) {
   const rootIndex = Math.round(hueAdjusted / 30) % 12;
   const rootNote = NOTES[rootIndex];
 
-  const octaveFloat = (lightness / 100 * 3) + (saturation / 100);
-  const octave = Math.max(1, Math.min(5, Math.floor(octaveFloat) + 1));
+  // Always use octave 3 for root note
+  const octave = 3;
 
   const quality = determineChordQuality(colorCharacteristics);
 
@@ -147,45 +220,6 @@ function hexToComplexChord(hexColor) {
     voicing: voicing,
     centsDeviation: centsDeviation.toString()
   };
-}
-
-function generateComplexChord(chord) {
-  const rootNote = chord.root.slice(0, -1);  // Get complete root note without octave
-  const baseOctave = parseInt(chord.root.slice(-1));
-  const centsDeviation = parseInt(chord.centsDeviation);
-  
-  // Get root note index
-  const rootIndex = NOTES.indexOf(rootNote);
-  if (rootIndex === -1) {
-    console.error(`Invalid root: ${rootNote}`);
-    return [];
-  }
-
-  // Get intervals for the chord quality
-  const intervals = CHORD_INTERVALS[chord.quality] || CHORD_INTERVALS[''];  // default to major if quality not found
-
-  // Generate notes using intervals
-  let notes = intervals.map((interval, index) => {
-    // Calculate the actual note index in the chromatic scale
-    const noteIndex = ((rootIndex + interval) % 12 + 12) % 12;
-    
-    // Calculate octave shifts based on interval size
-    const octaveShift = Math.floor((interval) / 12);
-    let finalOctave = baseOctave + octaveShift;
-    
-    // Keep within reasonable range (1-5)
-    finalOctave = Math.max(1, Math.min(5, finalOctave));
-    
-    const noteName = `${NOTES[noteIndex]}${finalOctave}`;
-    
-    return {
-      note: noteName,
-      frequency: getNoteFrequency(NOTES[noteIndex], finalOctave, centsDeviation),
-      cents: centsDeviation
-    };
-  });
-
-  return notes;
 }
 
 export { hexToComplexChord, generateComplexChord };

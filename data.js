@@ -1,6 +1,12 @@
-const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const NOTES_WITH_FLATS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+const NOTES_WITH_SHARPS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const NOTES = NOTES_WITH_SHARPS; // Keep this for backwards compatibility
 const OCTAVES = [0, 1, 2, 3, 4, 5];
 const VOICINGS = 5;
+
+// Keys that traditionally use flats
+const FLAT_KEYS = ['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 
+                   'Dm', 'Gm', 'Cm', 'Fm', 'Bbm', 'Ebm', 'Abm'];
 
 const CHORD_NAMES = {
   '': 'Major',
@@ -43,10 +49,28 @@ const CHORD_INTERVALS = {
   'maj7#11': [0, 4, 7, 11, 18], // major 7#11: root, major third, perfect fifth, major seventh, sharp eleventh
 };
 
+// Mapping for converting between flats and sharps
+const NOTE_ENHARMONIC = {
+  'C#': 'Db',
+  'D#': 'Eb',
+  'F#': 'Gb',
+  'G#': 'Ab',
+  'A#': 'Bb',
+  'Db': 'C#',
+  'Eb': 'D#',
+  'Gb': 'F#',
+  'Ab': 'G#',
+  'Bb': 'A#'
+};
+
 export { 
+  NOTES_WITH_FLATS,
+  NOTES_WITH_SHARPS,
   NOTES, 
   OCTAVES, 
   VOICINGS, 
   CHORD_NAMES,
-  CHORD_INTERVALS
+  CHORD_INTERVALS,
+  FLAT_KEYS,
+  NOTE_ENHARMONIC
 };
