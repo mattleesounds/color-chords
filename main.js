@@ -1,7 +1,19 @@
 import * as Tone from 'tone';
 import './style.css';
-import { hexToComplexChord, generateComplexChord } from './synth.js';
-import { CHORD_NAMES } from './data.js';
+import { 
+    hexToComplexChord, 
+    generateComplexChord,
+    generateExtendedQualities,
+    calculateUniqueValues,
+    getNoteFrequency
+} from './synth.js';
+import { 
+    CHORD_NAMES, 
+    CHORD_INTERVALS,
+    NOTES,
+    OCTAVES,
+    VOICINGS 
+} from './data.js';
 
 function getRandomInt() {
   return Math.floor(Math.random() * 255);
@@ -25,72 +37,59 @@ let randomColor = getRandomHexColor();
 document.querySelector('#app').style.backgroundColor = randomColor;
 
 document.getElementById("play-button").addEventListener("click", async function () {
-  console.log('Button clicked');
-  try {
-    await Tone.start();
-    console.log('Tone started');
-    let randomColor = getRandomHexColor();
-    console.log('Random color generated:', randomColor);
-    document.querySelector('#app').style.backgroundColor = randomColor;
+    try {
+        await Tone.start();
+        console.log('Tone started');
+        let randomColor = getRandomHexColor();
+        document.querySelector('#app').style.backgroundColor = randomColor;
 
-    const complexChord = hexToComplexChord(randomColor);
-    console.log('--- Debug: Chord Specification ---');
-    console.log('Complex chord object:', complexChord);
-    
-    const chordNotes = generateComplexChord(complexChord);
-    console.log('--- Debug: Chord Generation ---');
-    console.log('Root note:', complexChord.root[0]);
-    console.log('Quality:', complexChord.quality);
-    console.log('Generated notes:', chordNotes);
-    console.log('-------------------------');
+        const complexChord = hexToComplexChord(randomColor);
+        console.log('Complex chord:', complexChord);
+        
+        const chordNotes = generateComplexChord(complexChord);
+        console.log('Generated notes:', chordNotes);
+        console.log('Number of notes:', chordNotes.length);
+        console.log('Intervals used:', CHORD_INTERVALS[complexChord.quality]);
+        console.log('Quality generated:', complexChord.quality);
 
-    const synth = new Tone.PolySynth().toDestination();
-    synth.set({
-      envelope: {
-        attack: 0.5,
-        release: 0.8
-      }
-    });
+        const synth = new Tone.PolySynth().toDestination();
+        synth.set({
+            envelope: {
+                attack: 0.5,
+                release: 0.8
+            }
+        });
 
-    Tone.Master.volume.value = -10;
+        Tone.Master.volume.value = -10;
 
-    const frequencies = chordNotes.map(note => note.frequency);
-    const duration = '1.5n';
-    
-    synth.triggerAttackRelease(frequencies, duration, Tone.now());
-    console.log('Chord played with frequencies:', frequencies);
+        const frequencies = chordNotes.map(note => note.frequency);
+        const duration = '1.5n';
+        
+        synth.triggerAttackRelease(frequencies, duration, Tone.now());
+        console.log('Playing frequencies:', frequencies);
 
-    document.querySelector('#text').innerHTML = `
-      <div>
-        <h1 class="text-white">
-          Color: ${randomColor}
-          <br>
-          <br>
-          Chord: ${getFullChordName(complexChord)}
-          <br>
-          <br>
-          Notes: ${chordNotes.map(n => n.note).join(', ')}
-          <br>
-          <br>
-          Root Frequency: ${chordNotes[0].frequency.toFixed(2)} Hz
-          <br>
-          <span class="text-sm">Microtonal adjustment: ${complexChord.centsDeviation}¢</span>
-        </h1>
-      </div>
-    `;
+        document.querySelector('#text').innerHTML = `
+            <div>
+                <h1 class="text-white">
+                    Color: ${randomColor}
+                    <br>
+                    <br>
+                    Chord: ${getFullChordName(complexChord)}
+                    <br>
+                    <br>
+                    Notes: ${chordNotes.map(n => n.note).join(', ')}
+                    <br>
+                    <br>
+                    Root Frequency: ${chordNotes[0].frequency.toFixed(2)} Hz
+                    <br>
+                    <span class="text-sm">Microtonal adjustment: ${complexChord.centsDeviation}¢</span>
+                    <br>
+                    <span class="text-sm">Total notes: ${chordNotes.length}</span>
+                </h1>
+            </div>
+        `;
 
-    console.log('Chord details:', {
-      color: randomColor,
-      rootNote: complexChord.root,
-      quality: complexChord.quality,
-      inversion: complexChord.inversion,
-      voicing: complexChord.voicing,
-      centsDeviation: complexChord.centsDeviation,
-      rootFrequency: chordNotes[0].frequency.toFixed(2) + ' Hz',
-      notes: chordNotes.map(n => n.note)
-    });
-
-  } catch (error) {
-    console.error('Error generating chord:', error);
-  }
+    } catch (error) {
+        console.error('Error generating chord:', error);
+    }
 });

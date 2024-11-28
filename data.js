@@ -31,24 +31,63 @@ const CHORD_NAMES = {
 };
 
 const CHORD_INTERVALS = {
-  '': [0, 4, 7],          // major: root, major third, perfect fifth
-  'm': [0, 3, 7],         // minor: root, minor third, perfect fifth
-  'm7': [0, 3, 7, 10],    // minor 7: root, minor third, perfect fifth, minor seventh
-  'm6': [0, 3, 7, 9],     // minor 6: root, minor third, perfect fifth, major sixth
-  'm9': [0, 3, 7, 10, 14], // minor 9: root, minor third, perfect fifth, minor seventh, major ninth
-  'm11': [0, 3, 7, 10, 14, 17], // minor 11: root, minor third, perfect fifth, minor seventh, major ninth, perfect eleventh
-  'sus4': [0, 5, 7],      // sus4: root, perfect fourth, perfect fifth
-  'sus2': [0, 2, 7],      // sus2: root, major second, perfect fifth
-  'dim7': [0, 3, 6, 9],   // diminished 7: root, minor third, diminished fifth, diminished seventh
-  '5': [0, 7],            // power chord: root, perfect fifth
-  '7': [0, 4, 7, 10],     // dominant 7: root, major third, perfect fifth, minor seventh
-  'maj7': [0, 4, 7, 11],  // major 7: root, major third, perfect fifth, major seventh
-  '9': [0, 4, 7, 10, 14], // dominant 9: root, major third, perfect fifth, minor seventh, major ninth
-  'maj9': [0, 4, 7, 11, 14], // major 9: root, major third, perfect fifth, major seventh, major ninth
-  '13': [0, 4, 7, 10, 14, 21], // dominant 13: root, major third, perfect fifth, minor seventh, major ninth, major thirteenth
-  'maj7#11': [0, 4, 7, 11, 18], // major 7#11: root, major third, perfect fifth, major seventh, sharp eleventh
+  // Basic triads
+  '': [0, 4, 7],                    // major triad (C E G)
+  'm': [0, 3, 7],                   // minor triad (C Eb G)
+  
+  // Basic seventh chords
+  '7': [0, 4, 7, 10],              // dominant seventh (C E G Bb)
+  'maj7': [0, 4, 7, 11],           // major seventh (C E G B)
+  'm7': [0, 3, 7, 10],             // minor seventh (C Eb G Bb)
+  'm7b5': [0, 3, 6, 10],           // minor seven flat five (C Eb Gb Bb)
+  'm(maj7)': [0, 3, 7, 11],        // minor major seventh (C Eb G B)
+  
+  // Sixth chords
+  '6': [0, 4, 7, 9],               // major sixth (C E G A)
+  'm6': [0, 3, 7, 9],              // minor sixth (C Eb G A)
+  
+  // Ninth chords
+  '9': [0, 4, 7, 10, 14],          // dominant ninth (C E G Bb D)
+  'maj9': [0, 4, 7, 11, 14],       // major ninth (C E G B D)
+  'm9': [0, 3, 7, 10, 14],         // minor ninth (C Eb G Bb D)
+  '7b9': [0, 4, 7, 10, 13],        // dominant seven flat nine (C E G Bb Db)
+  
+  // Eleventh chords
+  '11': [0, 4, 7, 10, 14, 17],     // dominant eleventh (C E G Bb D F)
+  'maj11': [0, 4, 7, 11, 14, 17],  // major eleventh (C E G B D F)
+  'm11': [0, 3, 7, 10, 14, 17],    // minor eleventh (C Eb G Bb D F)
+  
+  // Thirteenth chords
+  '13': [0, 4, 7, 10, 14, 17, 21], // dominant thirteenth (C E G Bb D F A)
+  'maj13': [0, 4, 7, 11, 14, 17, 21], // major thirteenth (C E G B D F A)
+  'm13': [0, 3, 7, 10, 14, 17, 21],   // minor thirteenth (C Eb G Bb D F A)
+  
+  // Suspended chords
+  'sus2': [0, 2, 7],               // suspended second (C D G)
+  'sus4': [0, 5, 7],               // suspended fourth (C F G)
+  '7sus4': [0, 5, 7, 10],          // dominant seven sus four (C F G Bb)
+  '9sus4': [0, 5, 7, 10, 14],      // dominant nine sus four (C F G Bb D)
+  'maj9sus4': [0, 5, 7, 11, 14],   // major nine sus four (C F G B D)
+  
+  // Added tone chords
+  'add9': [0, 4, 7, 14],           // major add nine (C E G D)
+  'madd9': [0, 3, 7, 14],          // minor add nine (C Eb G D)
+  '6add9': [0, 4, 7, 9, 14],       // six add nine (C E G A D)
+  'm6add9': [0, 3, 7, 9, 14],      // minor six add nine (C Eb G A D)
+  
+  // Altered dominant chords (keeping only b5 variants)
+  '7b5': [0, 4, 6, 10],            // dominant seven flat five (C E Gb Bb)
+  '7b9b5': [0, 4, 6, 10, 13],      // dominant seven flat nine flat five (C E Gb Bb Db)
+  
+  // Extended alterations
+  'maj9#11': [0, 4, 7, 11, 14, 18],    // major nine sharp eleven (C E G B D F#)
+  'maj13#11': [0, 4, 7, 11, 14, 18, 21], // major thirteen sharp eleven (C E G B D F# A)
+  'm9b5': [0, 3, 6, 10, 14],            // minor nine flat five (C Eb Gb Bb D)
+  'm11b5': [0, 3, 6, 10, 14, 17],       // minor eleven flat five (C Eb Gb Bb D F)
+  
+  // Power chord
+  '5': [0, 7],                     // power chord (C G)
 };
-
 // Mapping for converting between flats and sharps
 const NOTE_ENHARMONIC = {
   'C#': 'Db',
