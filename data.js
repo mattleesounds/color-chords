@@ -67,7 +67,7 @@ const CHORD_INTERVALS = {
   'sus4': [0, 5, 7],               // suspended fourth (C F G)
   '7sus4': [0, 5, 7, 10],          // dominant seven sus four (C F G Bb)
   '9sus4': [0, 5, 7, 10, 14],      // dominant nine sus four (C F G Bb D)
-  'maj9sus4': [0, 5, 7, 11, 14],   // major nine sus four (C F G B D)
+  'maj9sus4': [0, 5, 7, 11, 14],   // major nine sus four (C F G B D) 
   
   // Added tone chords
   'add9': [0, 4, 7, 14],           // major add nine (C E G D)
